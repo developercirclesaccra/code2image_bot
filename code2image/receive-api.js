@@ -1,6 +1,7 @@
 'use strict'
 
 const sendApi = require('./send-api');
+const getUserProfile = require('./get-user-profile');
 
 const handleMessage = (event) => {
   const message = event.message;
@@ -10,16 +11,26 @@ const handleMessage = (event) => {
     return;
   }
 
-  let text = message.text;
+  getUserProfile(senderId, (error, response, body) => {
+    if (error) {
+      throw error;
+    };
+    let user = JSON.parse(body);
+    console.log('User profile result: ', user);
+    let text = message.text, reply = "";
 
-  switch (text) {
-    case 'Code2Image':
-      let response = 'Hey smart';
-      sendApi.sendMessage(senderId, { text: response });
-    default:
-      sendApi.sendMessage(senderId, { text: text });
-  }
+    let welcomeText = "Hey " + user.first_name + "! I can format and highlight syntax in code you type here. You only need to enclose them in backticks '``' and I'll understand B-)";
 
+    let pendingText = "Sorry " + user.first_name + "! Peter is yet to provide endpoints I can call to parse your code! Blame him!! :poop:";
+
+    if (text.charAt(0) == '`') {
+      reply = pendingText;
+    } else {
+      reply = welcomeText;
+    }
+
+    sendApi.sendMessage(senderId, { text: reply });
+  });  
 };
 
 module.exports = {
