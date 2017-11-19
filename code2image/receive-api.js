@@ -2,6 +2,7 @@
 
 const sendApi = require('./send-api');
 const getUserProfile = require('./get-user-profile');
+const requestCall = require('./request-call');
 
 const handleMessage = (event) => {
   const message = event.message;
@@ -10,27 +11,55 @@ const handleMessage = (event) => {
   if (!message.text) {
     return;
   }
+  let text = message.text, messageJSON = {};
 
-  getUserProfile(senderId, (error, response, body) => {
-    if (error) {
-      throw error;
+  if (text.charAt(0) == '`') {
+    let code = text.replace(/[`]/g, "");
+    console.log('Code to be sent: ', code);
+    let toImageArgs = {
+      url_String: "https://code-to-image.herokuapp.com/convert.json",
+      method_String: 'POST',
+      json_Object: {
+        "message": code,
+      },
     };
-    let user = JSON.parse(body);
-    console.log('User profile result: ', user);
-    let text = message.text, reply = "";
+    requestCall(toImageArgs, (error, response, body) => {
+      if (error) {
+        throw error;
+      };
+      console.log('Endpoint call result: ', body);
+      let toImageResult = JSON.parse(body);
+      let imageLink = toImageResult.secure_url;
+      messageJSON = {
+        "attachment": {
+          "type": "image",
+          "payload": {
+            "url": imageLink,
+          }
+        }
+      };
+      sendApi.sendMessage(senderId, messageJSON);
+    });
+  } else {
+    getUserProfile(senderId, (error, response, body) => {
+      if (error) {
+        throw error;
+      };
+      let user = JSON.parse(body);
+      console.log('User profile result: ', user);
 
-    let welcomeText = "Hey " + user.first_name + "! I can format and highlight syntax in code you type here. You only need to enclose them in backticks '``' and I'll understand B-)";
 
-    let pendingText = "Sorry " + user.first_name + "! Peter is yet to provide endpoints I can call to parse your code! Blame him!! :poop:";
+      let welcomeText = "Hey " + user.first_name + "! I can format and highlight syntax in code you type here. You only need to enclose them in backticks '``' and I'll understand B-)";
 
-    if (text.charAt(0) == '`') {
-      reply = pendingText;
-    } else {
-      reply = welcomeText;
-    }
+      messageJSON = {
+        "text": welcomeText,
+      };
 
-    sendApi.sendMessage(senderId, { text: reply });
-  });  
+      // let pendingText = "Sorry " + user.first_name + "! Peter is yet to provide endpoints I can call to parse your code! Blame him!! :poop:";
+
+      sendApi.sendMessage(senderId, messageJSON);
+    });  
+  }
 };
 
 module.exports = {
