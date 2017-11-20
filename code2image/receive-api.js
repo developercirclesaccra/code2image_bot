@@ -19,7 +19,7 @@ const handleMessage = (event) => {
     let toImageArgs = {
       url_String: "https://code-to-image.herokuapp.com/convert.json",
       method_String: 'POST',
-      json_Object: {
+      jsonData_Object: {
         "message": code,
       },
     };
