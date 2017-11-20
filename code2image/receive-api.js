@@ -27,8 +27,9 @@ const handleMessage = (event) => {
       if (error) {
         throw error;
       };
-      console.log('Endpoint call result: ', body);
-      let toImageResult = JSON.parse(body);
+      // console.log('Endpoint call result: ', body);
+      // console.log('result type: ', typeof body);
+      let toImageResult = body; //JSON.parse(body);
       let imageLink = toImageResult.secure_url;
       messageJSON = {
         "attachment": {
